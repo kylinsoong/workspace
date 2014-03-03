@@ -1,0 +1,287 @@
+Question about jGroup
+---------------------
+1. As we know UDP is unreliable transport protocol, that means Data packets droped is accessible, so why Data packets droped can cause Exception in clustered JBoss?
+
+
+
+
+
+JTA Question
+------------
+<tkimura> In customer environment, JMS is failed to boot.
+
+<tkimura> Are you ok with this?
+
+<kylin> yeah
+
+<tkimura> There is a transaction recovery plugin for JMS in conf/jbossts-properties.xml
+
+<tkimura> But there is no JMS
+
+<tkimura> So it's warining
+
+<kylin> yeah, mainly i do not clear about the 'transaction recovery plugin'
+
+<kylin> sorry for I am not good at JTS
+
+<kylin> :)
+
+<tkimura> k, a bit long story
+
+<tkimura> it's not JTS but JTA
+
+<kylin> yeah, thanks for your time, this customer like ask some more deep question in phone
+
+<tkimura> The transaction manager (JBoss) is monitoring resource managers (transactional DB and/or JMS systems) in case failures
+
+<tkimura> More specifically, TM is calling XAResource.recover() method periodically
+
+<tkimura> When JMS is failed to boot, this call couldn't reach to JMS. So the TM log those WARNs.
+
+<tkimura> http://docs.redhat.com/docs/en-US/JBoss_Enterprise_Application_Platform/4.2/html/JBoss_Transactions_JTA_Programmers_Guide/chap-Transactions_JTA_Programmers_Guide-Transaction_Recovery.html
+
+<tkimura> This guide may help
+
+
+
+
+
+
+
+Why Jboss execute a Full GC after Jboss start 5 s
+-------------------------------------------------
+
+Hi Kylin,
+
+I don't know detail of FUll GC algorithm well.. But, I think that it works when optimizing an Old space in Java process.
+So, I guess that it has occurred since following GC moved the object to an Old space from a New(Young) space. 
+----
+[PSYoungGen: 36232K->0K(389504K)] [PSOldGen: 0K->36010K(889536K)] 
+----
+
+A New space is tuned as the following options and the Full GC timing may be able to be delayed.
+---
+-XX:NewSize,-XX:MaxNewSize,-XX:SurvivorRatio
+---
+
+Good luck,
+-Erik
+
+
+Hi, Erik
+
+I am sorry to disturb you, thanks for your precious time.
+
+I have a question, as attached gc.log, why JVM execute a Full GC after JBoss start 5.065 s, you know Full GC is "stop everything", its strongly affect JVM performance. I extract Full GC log as below
+----
+5.065: [Full GC (System) [PSYoungGen: 36232K->0K(389504K)] [PSOldGen: 0K->36010K(889536K)] 36232K->36010K(1279040K) [PSPermGen: 
+19999K->19999K(40320K)], 0.1438890 secs] [Times: user=0.13 sys=0.01, real=0.14 secs]
+----
+
+I have tried the following JVM_OPTS
+----    
+ -Xms1303m -Xmx1303m  -XX:PermSize=256m -XX:MaxPermSize=256m
+    
+ -Xms1303m -Xmx1303m  -XX:PermSize=128m -XX:MaxPermSize=256m
+    
+ -Xms1303m -Xmx1303m  -XX:MaxPermSize=256m
+----
+
+But each time while PSPermGen exceed 19999K(we can found from above extract gc log), the Full GC take place, could you account it for me?
+
+Thank you again.:-)
+
+Best Regards
+
+Kylin
+
+
+
+Question about thread dump
+--------------------------
+
+Hi Kylin,
+
+Question 1: How to find JVM hang root reason from thread dump? 
+
+Deadlock threads are "jvm-hang-lab-3-2" and "jvm-hang-lab-3-1". You can confirm deadlock threads that are output to "Found one Java-level deadlock" section in thread dump.
+
+These threads state are "waiting for monitor entry". Yes. usually, deadlock thread state is "waiting for monitor entry". However, the "waiting for monitor entry" is not unnormal state. It state thread is only waiting for releasing of a lock object as another thread(04_JVM_Hang_en.odp, Page 9).
+
+Please look at the locked *Object ID* in the stuck trace.  "jvm-hang-lab-3-2" is waiting for releasing <0x9e32be50> (waiting to lock <0x9e32be50>) and "jvm-hang-lab-3-1" is locking <0x9e32be50>(locked <0x9e32be50>). "jvm-hang-lab-3-1" is waiting for releasing <0x9e32be40> (waiting to lock <0x9e32be40>) and "jvm-hang-lab-3-2" is locking <0x9e32be40>(locked <0x9e32be40>). So, this is deadlock.
+
+Found one Java-level deadlock:
+=============================
+"jvm-hang-lab-3-2":
+  waiting to lock monitor 0x6a702064 (object 0x9e32be50, a com.kylin.troubleshooting.hang.deadlock.Resource),
+  which is held by "jvm-hang-lab-3-1"
+"jvm-hang-lab-3-1":
+  waiting to lock monitor 0x6a703644 (object 0x9e32be40, a com.kylin.troubleshooting.hang.deadlock.Resource),
+  which is held by "jvm-hang-lab-3-2"
+
+Java stack information for the threads listed above:
+===================================================
+"jvm-hang-lab-3-2":
+	at com.kylin.troubleshooting.hang.deadlock.Resource.lockInternal(Resource.java:26)
+	- waiting to lock <0x9e32be50> (a com.kylin.troubleshooting.hang.deadlock.Resource)
+	at com.kylin.troubleshooting.hang.deadlock.Resource.lock(Resource.java:21)
+	- locked <0x9e32be40> (a com.kylin.troubleshooting.hang.deadlock.Resource)
+	at com.kylin.troubleshooting.hang.deadlock.ResourceThread.run(ResourceThread.java:28)
+	at java.lang.Thread.run(Thread.java:679)
+"jvm-hang-lab-3-1":
+	at com.kylin.troubleshooting.hang.deadlock.Resource.lockInternal(Resource.java:26)
+	- waiting to lock <0x9e32be40> (a com.kylin.troubleshooting.hang.deadlock.Resource)
+	at com.kylin.troubleshooting.hang.deadlock.Resource.lock(Resource.java:21)
+	- locked <0x9e32be50> (a com.kylin.troubleshooting.hang.deadlock.Resource)
+	at com.kylin.troubleshooting.hang.deadlock.ResourceThread.run(ResourceThread.java:26)
+	at java.lang.Thread.run(Thread.java:679)
+
+
+Question 2: Why so many threads can be found from my attached dump file? 
+
+These threads automatically created by JVM except "jvm-hang-lab-3-2" and "jvm-hang-lab-3-1". You can ignore. 
+
+Erik
+
+
+Hi, Erik 
+
+I write a java code to simulate your slide(04_JVM_Hang_en.odp, Page 12) deadlock scenario, as attached files, if we run ResourceRunner like the following : 
+---- 
+java -cp jvm_hang_lab_3-1.0.jar com.kylin.troubleshooting.hang.deadlock.ResourceRunner a
+----
+
+thread deadlock will occur, then we can generate the thread dump also attached. 
+
+In my test program I only start 2 thread, the following code can help to make sense: 
+
+---- 
+Resource a = new Resource("Resource A"); 
+
+Resource b = new Resource("Resource B"); 
+
+Thread t1 = new Thread(new ResourceThread("jvm-hang-lab-3-1", a, b, true )); 
+
+Thread t2 = new Thread(new ResourceThread("jvm-hang-lab-3-2", a, b, false )); 
+----
+
+So I have 2 question currently. 
+
+Question 1: How to find JVM hang root reason from thread dump? 
+
+What we find from dump file can indicate that JVM Hang, or JVM hang because of this had occurred? we know most of JVM has four state(from your slider), which state is unnormal state, I have found from my attached thread dump, when deadlock happen, the thread state is ' waiting for monitor entry ', does ' waiting for monitor entry ' means unnormal? 
+
+Question 2: Why so many threads can be found from my attached dump file? 
+
+I only start 2 thread, above code can demonstrate, but while I analysing generated dump use Samurai, found many threads exist,like following: 
+---- 
+Attach Listener 
+
+DestroyJavaVM 
+
+jvm-hang-lab-3-2 
+
+jvm-hang-lab-3-1 
+
+Low Memory Detector 
+
+C2 CompilerThread1 
+
+C2 CompilerThread0 
+
+Signal Dispatcher 
+
+Finalizer 
+
+Reference Handler 
+
+VM Thread 
+
+GC task thread#0 (ParallelGC) 
+
+GC task thread#1 (ParallelGC) 
+
+GC task thread#2 (ParallelGC) 
+
+GC task thread#3 (ParallelGC) 
+
+VM Periodic Task Thread 
+----
+ 
+jvm-hang-lab-3-2,jvm-hang-lab-3-1 is the thread which i start, why there are 14 other threads? I also find very strange, some thread's trace very long, some thread's stack very short(only 2 lines), some threads no stack trace. like the bellow: 
+
+1. very long stack trace(actually some JBoss thread's stack trace really long): 
+---- 
+"jvm-hang-lab-3-2" prio=10 tid=0xb69e5c00 nid=0x2090 waiting for monitor entry [0x6a42c000] 
+java.lang.Thread.State: BLOCKED (on object monitor) 
+at com.kylin.troubleshooting.hang.deadlock.Resource.lockInternal(Resource.java:26) 
+- waiting to lock <0x9e32be50> (a com.kylin.troubleshooting.hang.deadlock.Resource) 
+at com.kylin.troubleshooting.hang.deadlock.Resource.lock(Resource.java:21) 
+- locked <0x9e32be40> (a com.kylin.troubleshooting.hang.deadlock.Resource) 
+at com.kylin.troubleshooting.hang.deadlock.ResourceThread.run(ResourceThread.java:28) 
+at java.lang.Thread.run(Thread.java:679) 
+
+Locked ownable synchronizers: 
+- None 
+---- 
+
+2. very short stack trace: 
+---- 
+"C2 CompilerThread1" daemon prio=10 tid=0xb69c6000 nid=0x208c waiting on condition [0x00000000] 
+java.lang.Thread.State: RUNNABLE 
+
+Locked ownable synchronizers: 
+- None 
+---- 
+
+3. no trace 
+---- 
+"GC task thread#0 (ParallelGC)" prio=10 tid=0xb690c000 nid=0x2083 runnable 
+---- 
+Could you explain why? 
+
+Thank you very much.  
+
+Kind Regards 
+
+Kylin 
+
+
+
+Question about Cloud Architecture
+---------------------------------
+Hi Kylin,
+
+It is possible to access the data, and applications, so there is a potential security risk. Additionally Openshift uses shared environments, isolated by SELinux, so it's a risk that other users may be able to access your data as well, although I don't know of any case that this has happened.
+
+As far as the vendor is concerned it should be part of the contract that the vendor will not access the data, or use it. You could check the Openshift terms and conditions for more information about Red Hat's policy.
+
+I think security concerns are high for all cloud types, including IaaS. That may be one reason for the slow adoption.
+
+Regards,
+Jason
+
+
+Hi Jason
+
+Thanks for your diagram, really explicit depict the operation scope between users and vendors.
+
+I have a question, Paas vendor take charge manage Runtime, Middleware, O/S, etc, does they have rights to access Data and Applications? I think it's easy to access Data and Applications for Paas vendor, that means there are potential security risk for Paas Users. How about you view?
+
+Regards,
+Kylin
+
+
+I found an even better diagram about IaaS,PaaS, and SaaS. It is attached.
+
+Regards,
+Jason
+
+
+
+
+
+
+
+
+

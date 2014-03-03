@@ -1,0 +1,66 @@
+-----------------------------------------------------------------------------------------------------------------------------
+--	| iptables | vim /etc/hosts | netstat | vim /etc/sudoers | grep "@WebFault" ./* -Ri	
+--	| Printer use | Setting Environment Variables | SCP Remote passing file | Check Folder Size
+-----------------------------------------------------------------------------------------------------------------------------
+Printer use
+	vim /etc/cups/cupsd.conf
+	service cups restart
+
+---------------------------------------------------------------------------------------------------------
+Setting Environment Variables
+	1> current user Variables
+	   vim .bash_profile 
+	   reboot
+	2> Gloabl Variables
+	   vim /etc/profile	
+
+---------------------------------------------------------------------------------------------------------
+SCP Remote passing file
+	scp jboss-eap-5.1.2.zip kylin@10.66.129.67:/home/kylin/work
+
+---------------------------------------------------------------------------------------------------------
+Check Folder Size
+	du -sh
+	[kylin@localhost image]$ du -sh jboss-brms.war/
+	103M	jboss-brms.war/
+
+---------------------------------------------------------------------------------------------------------
+iptables
+	service iptables start
+	service iptables stop
+	iptables -L -n
+	iptables -F
+
+---------------------------------------------------------------------------------------------------------
+vim /etc/hosts
+	used in an operating system to map hostnames to IP addresses
+
+--------------------------------------------------------------------------------------------------------
+
+netstat -tunlop |grep java
+
+---------------------------------------------------------------------------------------------------------
+
+x,ys/content/replace_content/gi
+%s/content/replace_content/g
+
+---------------------------------------------------------------------------------------------------------
+
+vim /etc/sudoers
+	Edit user for sudo enable
+	~~~
+	<user>    ALL=(ALL)       ALL
+	~~~
+
+---------------------------------------------------------------------------------------------------------
+
+grep "@WebFault" ./* -Ri
+	Find the files which contain string "@WebFault"
+
+
+---------------------------------------------------------------------------------------------------------
+
+configure ln
+     ln -s /usr/java/jdk1.6.0_31/bin/java /etc/alternatives/java
+
+----------------------------------------------------------------------------------------------------------

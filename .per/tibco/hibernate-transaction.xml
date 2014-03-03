@@ -1,0 +1,21 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+I - Transactions and Concurrency
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+The most important point about Hibernate Entity Manager and concurrency control is that it  is very easy to understand.
+Hibernate Entity Manager directly uses JDBC connections and JTA resources without adding any additional locking behavior.
+Hibernate Entity Manager only adds automatic versioning but does not lock objects in memory or change the isolation level of your database transactions. 
+Basically, use Hibernate Entity Manager like you would use direct JDBC (or JTA/CMT) with your database resources.
+	entity manager      - an API and programming object
+	persistence context - a definition of scope. A persistence context is usually bound to a JTA transaction in Java EE, and a persistence context starts and ends at transaction boundaries (transaction-scoped) unless you use an extended entity manager.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+II - Entity manager and transaction scopes
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+EntityManagerFactory: A EntityManagerFactory is an expensive-to-create, threadsafe object intended to be shared by all application threads. 
+											It is created once, usually on application startup.
+											
+EntityManager       : An EntityManager is an inexpensive, non-threadsafe object that should be used once, for a single business process, a single unit of work,and then discarded.
+											An EntityManager will not obtain a JDBC Connection (or a Datasource) unless it is needed, so you may safely open and close an EntityManager even if you are not sure that data access will be needed to serve a particular request.
+
+Database Transaction: A database transaction has to be as short as possible, to reduce lock contention in the database.	
+											Long database transactions will prevent your application from scaling to highly concurrent load.										

@@ -1,0 +1,40 @@
+-------------------------------------------------------------------------------------------------------------------------------
+I Jboss Messaging
+-------------------------------------------------------------------------------------------------------------------------------
+It is a complete rewrite of JBossMQ, the legacy JBoss Java Message Service (JMS) provider. 
+It offers improvements to performance in both single node and clustered environments
+
+-------------------------------------------------------------------------------------------------------------------------------
+II. Migration Note
+-------------------------------------------------------------------------------------------------------------------------------
+0. start throw a exception 'org.jboss.deployers.spi.DeploymentException: Error deploying: file:/C:/jboss-eap-5.1/jboss-as/server'
+
+1. modify jbossweb.sar\server.xml for '8800' port number
+
+2. modify jboss-log4j.xml
+
+-------------------------------------------------------------------------------------------------------------------------------
+III. JNDI on JBOSS Platform 5 
+-------------------------------------------------------------------------------------------------------------------------------
+1. org.jboss.ejb3.proxy.impl.factory.session.stateful.StatefulSessionProxyFactory
+2. lookup depency jar:
+		jnp-client.jar
+		jboss-logging-spi.jar
+		jboss-ejb3-proxy-impl-client.jar
+		jboss-ejb3-common-client.jar
+		jboss-aop-client.jar
+		jboss-aspect-jdk50-client.jar
+		jboss-remoting.jar
+		jboss-common-core.jar
+		concurrent.jar
+		jboss-ejb3-proxy-spi-client.jar
+		jboss-ejb3-core-client.jar
+		jboss-ejb3-security-client.jar
+		jbosssx-client.jar
+		jboss-security-spi.jar
+		jboss-javaee.jar
+		jboss-integration.jar
+		jboss-ejb3-proxy-clustered-client.jar
+		ejb3-persistence.jar
+		
+

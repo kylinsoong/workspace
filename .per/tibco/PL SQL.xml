@@ -1,0 +1,279 @@
+----------------------------------------------------------------------------------------------------------------------
+1. Variables
+----------------------------------------------------------------------------------------------------------------------
+1> What are Placeholders?
+		Placeholders are temporary storage area. Placeholders can be any of Variables, Constants and Records. 
+		Oracle defines placeholders to store data temporarily, which are used to manipulate data during the execution of a PL SQL block. 
+
+DECLARE  
+  var_salary number(6);  
+  var_emp_id number(6) := 1116;
+BEGIN
+  select salary into var_salary from employee where emp_id = var_emp_id;
+  dbms_output.put_line(var_salary);
+  dbms_output.put_line('The employee '|| var_emp_id ||' has  salary  '|| var_salary );
+END;
+/  
+
+Scope of Variables 
+		The variables declared in the inner blocks are not accessible to outer blocks.
+		
+DECLARE
+  var_num1 number;
+  var_num2 number;
+BEGIN
+  var_num1 := 100;
+  var_num2 := 200;   
+  DECLARE
+    var_mult number;
+  BEGIN
+    var_mult := var_num1 * var_num2;   
+    dbms_output.put_line('var_mult '|| var_mult);  
+  END;
+  dbms_output.put_line('var_num1 '|| var_num1);  
+  dbms_output.put_line('var_num2 '|| var_num2);  
+END;
+/ 
+
+
+----------------------------------------------------------------------------------------------------------------------
+2. Constants
+----------------------------------------------------------------------------------------------------------------------
+As the name implies a constant is a value used in a PL/SQL Block that remains unchanged throughout the program.
+You must assign a value to a constant at the time you declare it. If you do not assign a value to a constant while declaring it and try to assign a value in the execution section, you will get a error. If you execute the below Pl/SQL block you will get error. 
+
+DECLARE  
+  salary_increase CONSTANT number(3) := 100; 
+BEGIN   
+  dbms_output.put_line (salary_increase); 
+END; 
+/
+
+----------------------------------------------------------------------------------------------------------------------
+3. Records
+----------------------------------------------------------------------------------------------------------------------
+1> What are records?
+		Records are another type of datatypes which oracle allows to be defined as a placeholder. Records are composite datatypes, which means it is a combination of different scalar datatypes like char, varchar, number etc.  Each scalar data types in the record holds a value. 
+		A record can be visualized as a row of data. It can contain all the contents of a row.
+
+2> Declaring a record:
+		To declare a record, you must first define a composite datatype; then declare a record for that type.
+		If all the fields of a record are based on the columns of a table, we can declare the record as follows: 
+				record_name table_name%ROWTYPE 
+
+3> Passing Values To and From a Record 
+		When you assign values to a record, you actually assign values to the fields within it. 
+		The General Syntax to assign a value to a column within a record direclty is: 
+				record_name.col_name := value;  
+
+DECLARE
+  TYPE employee_type IS RECORD
+  ( 
+    employee_id number(5),  
+    employee_first_name varchar2(25),  
+    employee_last_name employee.last_name%type,  
+    employee_dept employee.dept%type 
+  );
+  employee_salary employee.salary%type;
+  employee_rec employee_type;
+  employee_rec_all employee%ROWTYPE;
+  var_emp_id number(6) := 1116;
+  var_test_1 varchar2(25);
+  var_test_2 varchar2(25);
+BEGIN
+SELECT first_name, last_name, dept INTO employee_rec.employee_first_name, employee_rec.employee_last_name, employee_rec.employee_dept from employee where emp_id = var_emp_id;
+SELECT * INTO employee_rec_all from employee where emp_id = var_emp_id;
+var_test_1 := employee_rec.employee_first_name;
+dbms_output.put_line(var_test_1);
+var_test_2 := employee_rec_all.first_name;
+dbms_output.put_line(var_test_2);
+commit;
+END;
+/				
+
+----------------------------------------------------------------------------------------------------------------------
+4. Conditional Statements & Iterative Statements 
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+5. Cursors
+----------------------------------------------------------------------------------------------------------------------
+1> What are cursors?
+		A cursor is a temporary work area created in the system memory when a SQL statement is executed. A cursor contains information on a select statement and the rows of data accessed by it. 
+		This temporary work area is used to store the data retrieved from the database, and manipulate this data. 
+		A cursor can hold more than one row, but can process only one row at a time. The set of rows the cursor holds is called the active set. 
+
+2> Two types of Cursor:
+		Implicit cursors: These are created by default when DML statements like, INSERT, UPDATE, and DELETE statements are executed. 
+											They are also created when a SELECT statement that returns just one row is executed.
+		Explicit cursors: They must be created when you are executing a SELECT statement that returns more than one row. 
+											Even though the cursor stores multiple records, only one record can be processed at a time, which is called as current row. When you fetch a row the current row position moves to next row.
+
+3> Implicit Cursors:
+DECLARE  
+  var_rows number(5);
+BEGIN
+  UPDATE employee SET salary = salary + 1000;
+  IF SQL%NOTFOUND THEN
+     dbms_output.put_line('None of the salaries where updated');
+  ELSIF SQL%FOUND THEN
+     var_rows := SQL%ROWCOUNT;
+     dbms_output.put_line('Salaries for ' || var_rows || ' employees are updated');  
+  END IF;
+  commit;
+END;
+/
+
+4> Explicit Cursors
+		1) How to use Explicit Cursor?
+				There are four steps in using an Explicit Cursor:
+						DECLARE the cursor in the declaration section;
+						OPEN the cursor in the Execution Section;
+						FETCH the data from cursor into PL/SQL variables or records in the Execution Section;
+						CLOSE the cursor in the Execution Section before you end the PL/SQL Block. 
+		2) How to access an Explicit Cursor?
+				These are the three steps in accessing the cursor:
+						Open the cursor.
+						Fetch the records in the cursor one at a time.
+						Close the cursor.
+		
+5> What are Explicit Cursor Attributes?
+-- Simple Loop
+DECLARE 
+   emp_rec employee%ROWTYPE;
+   CURSOR emp_cur IS SELECT * FROM employee WHERE salary > 5000;
+BEGIN
+   IF NOT emp_cur%ISOPEN THEN
+     OPEN emp_cur;
+   END IF;
+   
+   LOOP
+     FETCH emp_cur INTO emp_rec;
+     EXIT WHEN emp_cur%NOTFOUND;
+     dbms_output.put_line (emp_rec.first_name || '  ' || emp_rec.last_name || '  ' || emp_rec.dept || '  ' || emp_rec.salary);
+     END LOOP;
+     
+   IF emp_cur%ISOPEN THEN
+     CLOSE emp_cur; 
+   END IF;
+END;
+/ 
+
+-- While Loop
+DECLARE 
+   emp_rec employee%ROWTYPE;
+   CURSOR emp_cur IS SELECT * FROM employee WHERE salary > 5000;
+BEGIN
+   IF NOT emp_cur%ISOPEN THEN
+     OPEN emp_cur;
+   END IF;
+   
+   FETCH emp_cur INTO emp_rec;
+   WHILE emp_cur%FOUND 
+     LOOP
+     dbms_output.put_line (emp_rec.first_name || '  ' || emp_rec.last_name || '  ' || emp_rec.dept || '  ' || emp_rec.salary);
+     FETCH emp_cur INTO emp_rec;
+     END LOOP;
+     
+   IF emp_cur%ISOPEN THEN
+     CLOSE emp_cur; 
+   END IF;
+END;
+/ 
+
+-- For Loop
+DECLARE 
+   emp_rec employee%ROWTYPE;
+   CURSOR emp_cur IS SELECT * FROM employee WHERE salary > 5000;
+BEGIN  
+   FOR emp_rec IN emp_cur
+     LOOP
+     dbms_output.put_line (emp_rec.first_name || '  ' || emp_rec.last_name || '  ' || emp_rec.dept || '  ' || emp_rec.salary);
+     END LOOP;
+     
+   IF emp_cur%ISOPEN THEN
+     CLOSE emp_cur; 
+   END IF;
+END;
+/ 				
+
+----------------------------------------------------------------------------------------------------------------------
+6. Stored Procedures
+----------------------------------------------------------------------------------------------------------------------
+1> What is a Stored Procedure?
+		A stored procedure or in simple a proc is a named PL/SQL block which performs one or more specific task. This is similar to a procedure in other programming languages. 
+		A procedure has a header and a body. 
+		The header consists of the name of the procedure and the parameters or variables passed to the procedure. 
+		The body consists or declaration section, execution section and exception section similar to a general PL/SQL Block. 
+		A procedure is similar to an anonymous PL/SQL Block but it is named for repeated usage
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+7. Functions 
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+
+5
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+

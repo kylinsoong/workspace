@@ -1,0 +1,19 @@
+|=========================================================
+|*Social Account*                            |*Credential*     |*back-up*
+|http://www.linkedin.com/                    |    I            |    II
+|https://github.com                          |    I            |    II
+|https://www.facebook.com/                   |    I            |    II
+|https://en.gravatar.com/                    |    I            |    II
+|http://wordpress.com/                       |    I            |    II
+|https://twitter.com/                        |    I            |    II
+|http://www.slideshare.net/                  |    I            |    II
+|https://sourceforge.net/                    |    III          |    -
+|http://weibo.com/                           |    I            |    -   
+|http://about.me/ksoong                      |    I            |    -
+|http://www.amazon.com                       |    I            |    -
+|http://www.bjrbj.gov.cn/                    |    -            |    -
+|=========================================================
+
+* I - kylinsoong.1214@gmail.com
+* II - kylinsoong@yahoo.com
+* III - kylinsoong

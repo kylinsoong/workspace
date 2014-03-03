@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ===================================================================== -->
+<!--                                                                       -->
+<!--  JBoss Server Configuration                                           -->
+<!--                                                                       -->
+<!-- ===================================================================== -->
+
+<!-- $Id: oracle-xa-ds.xml 6645 2008-05-19 02:52:42Z jwang $ -->
+
+<!-- ===================================================================== -->
+<!-- ATTENTION:  DO NOT FORGET TO SET Pad=true IN transaction-service.xml  -->
+<!-- ===================================================================== -->
+
+<datasources>
+  <xa-datasource>
+    <jndi-name>com/OracleDS_COM</jndi-name>
+    <track-connection-by-tx/>
+    <isSameRM-override-value>false</isSameRM-override-value>
+    <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+    <xa-datasource-property name="URL">jdbc:oracle:thin:@//192.168.68.66:1521/prof</xa-datasource-property>
+    <!-- Use the security domain defined in conf/login-config.xml -->
+	<security-domain>IPCDBSecurityDomain</security-domain>
+    <!-- Uses the pingDatabase method to check a connection is still valid before handing it out from the pool -->
+    <!--valid-connection-checker-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleValidConnectionChecker</valid-connection-checker-class-name-->
+    <!-- Checks the Oracle error codes and messages for fatal errors -->
+    <exception-sorter-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter</exception-sorter-class-name>
+    <!-- Oracles XA datasource cannot reuse a connection outside a transaction once enlisted in a global transaction and vice-versa -->
+    <no-tx-separate-pools/>
+    <min-pool-size>1</min-pool-size>
+    <max-pool-size>40</max-pool-size>
+  </xa-datasource>
+
+  <xa-datasource>
+    <jndi-name>com/OracleDS_SSOLITE</jndi-name>
+    <track-connection-by-tx/>
+    <isSameRM-override-value>false</isSameRM-override-value>
+    <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+    <xa-datasource-property name="URL">jdbc:oracle:thin:@//192.168.68.66:1521/prof</xa-datasource-property>
+    <!-- Use the security domain defined in conf/login-config.xml -->
+	<security-domain>IPEDBSecurityDomain</security-domain>
+    <!-- Uses the pingDatabase method to check a connection is still valid before handing it out from the pool -->
+    <!--valid-connection-checker-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleValidConnectionChecker</valid-connection-checker-class-name-->
+    <!-- Checks the Oracle error codes and messages for fatal errors -->
+    <exception-sorter-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter</exception-sorter-class-name>
+    <!-- Oracles XA datasource cannot reuse a connection outside a transaction once enlisted in a global transaction and vice-versa -->
+    <no-tx-separate-pools/>
+  </xa-datasource>
+
+  <mbean code="org.jboss.resource.adapter.jdbc.vendor.OracleXAExceptionFormatter" 
+         name="jboss.jca:service=OracleXAExceptionFormatter">
+    <depends optional-attribute-name="TransactionManagerService">jboss:service=TransactionManager</depends>
+  </mbean>
+
+</datasources>

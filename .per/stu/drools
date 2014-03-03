@@ -1,0 +1,203 @@
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+-- SET UP THE DROOLS RUNTIME | STEPS FOR INSTALL DROOLS & JBPM ECLIPSE PLUGIN | DEFINITION OF EXPERT SYSTEMS | jBPM 5  |             --
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+SET UP THE DROOLS RUNTIME
+
+	A Drools runtime is a collection of jar files that represent one specific release of the Drools project jars. To create a runtime, 
+you must point the IDE to the release of your choice. 
+
+Defining a Drools Runtime
+=========================
+
+- Selecting the "Preferences" menu item in the menu "Window"
+- On the left side of this dialog, under the Drools category, select "Installed Drools runtimes". 
+- Click on the add button in the right of above pop up dialog
+- Selecting reference binaries throw clicking Browse button
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+STEPS FOR INSTALL DROOLS & JBPM ECLIPSE PLUGIN
+
+Installing the plugins in Eclipse
+=================================
+
+- Open Eclipse.
+- Open the menu "Help", menu item "Install new software..."
+- Click on the button "Add..." to add a new software site.
+- Fill in the name "drools local update site"
+- Click on the button "Local..." and select ".../binaries/org.drools.updatesite"
+- Select all the plugins. Click the buttons "Next" and "Finish".
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+DEFINITION OF EXPERT SYSTEMS
+
+Expert Systems use Knowledge representation to facilitate the codification of knowledge into a knowledge base which can be used for reasoning, 
+i.e., we can process data with this knowledge base to infer conclusions. 
+
+Expert Systems are also known as Knowledge-based Systems and Knowledge-based Expert Systems and are considered to be 
+"applied artificial intelligence". 
+
+The process of developing with an Expert System is Knowledge Engineering.
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+jBPM 5
+
+What is jBPM?
+=============
+	BPM makes the bridge between business analysts, developers and end users, by offering process management features and tools 
+in a way that both business users and developers like it. Domain-specific nodes can be plugged into the palette, making the processes 
+more easily understood by business users.
+
+	A business process allows you to model your business goals by describing the steps that need to be executed to achieve that goal 
+and the order, using a flow chart. This greatly improves the visibility and agility of your business logic.
+
+	Executable business processes bridge the gap between business users and developers as they are higher-level and use 
+domain-specific concepts that are understood by business users but can also be executed directly.
+
+	jBPM focuses on executable business process, which are business processes that contain enough detail so they can actually 
+be executed on a BPM engine.
+
+	jBPM is a flexible Business Process Management (BPM) Suite. It's light-weight, fully open-source (distributed under Apache license) 
+and written in Java. It allows you to model, execute and monitor business processes, throughout their life cycle.
+
+	The core of jBPM is a light-weight, extensible workflow engine written in pure Java that allows you to execute business processes 
+using the latest BPMN 2.0 specification. It can run in any Java environment, embedded in your application or as a service.
+
+
+jbpm-gwt-console-server.war
+===========================
+1. jboss-web.xml define security domain and context root as below:
+	<security-domain>java:/jaas/jbpm-console</security-domain>
+	<context-root>gwt-console-server</context-root>
+
+
+
+
+Core Engine: Basics
+===================
+1. Start event
+	The start of the process. A process should have exactly one start node, which cannot have incoming connections and should have one 
+outgoing connection. Whenever a process is started, execution will start at this node and automatically continue to the first node linked to 
+this start event, and so on. It contains the following properties:
+	a. Id: The id of the node (which is unique within one node container).
+	b. Name: The display name of the node.
+
+2. End event
+	The end of the process. A process should have one or more end events. The End Event should have one incoming connection and cannot 
+have any outgoing connections. It contains the following properties:
+	a. Id: The id of the node (which is unique within one node container).
+	b. Name: The display name of the node.
+	c. An End Event can terminate the entire process or just the path.
+
+3. Throwing error event
+	An Error Event can be used to signal an exceptional condition in the process. It should have one incoming connection and no 
+outgoing connections. When an Error Event is reached in the process, it will throw an error with the given name. The process will search f
+or an appropriate error handler that is capable of handling this kind of fault. If no error handler is found, the process instance will be 
+aborted. An Error Event contains the following properties:
+	a. Id: The id of the node (which is unique within one node container).
+	b. Name: The display name of the node.
+	c. FaultName: The name of the fault. This name is used to search for appropriate exception handlers that are capable of handling 
+		      this kind of fault.
+	d. FaultVariable: The name of the variable that contains the data associated with this fault. This data is also passed on to the 
+			  exception handler (if one is found).
+
+4. Timer event
+	Represents a timer that can trigger one or multiple times after a given period of time. A Timer Event should have one incoming 
+connection and one outgoing connection. The timer delay specifies how long the timer should wait before triggering the first time. When 
+a Timer Event is reached in the process, it will start the associated timer. The timer is cancelled if the timer node is cancelled. The 
+Timer Event contains the following properties:
+	a. Id: The id of the node (which is unique within one node container).
+	b. Name: The display name of the node.
+	c. Timer delay: The delay that the node should wait before triggering the first time. The expression should be of the form [#d][#h][#m]
+	                [#s][#[ms]]. This allows you to specify the number of days, hours, minutes, seconds and milliseconds.
+	d. Timer period: The period between two subsequent triggers. If the period is 0, the timer should only be triggered once. The 
+			 expression should be of the form [#d][#h][#m][#s][#[ms]]. 
+
+5. Signal event
+	A Signal Event can be used to respond to internal or external events during the execution of the process. A Signal Event should have 
+no incoming connections and one outgoing connection. It specifies the type of event that is expected. Whenever that type of event is detected, 
+the node connected to this event node will be triggered. It contains the following properties:
+	a. Id: The id of the node (which is unique within one node container).
+	b. Name: The display name of the node.
+	c. EventType: The type of event that is expected.
+	d. VariableName: The name of the variable that will contain the data associated with this event(if any) when this event occurs.
+
+6. Script task
+	Represents a script that should be executed in this process. A Script Task should have one incoming connection and one outgoing 
+connection. The associated action specifies what should be executed, the dialect used for coding the action (i.e., Java or MVEL), and the 
+actual action code. When a Script Task is reached in the process, it will execute the action and then continue with the next node. It contains 
+the following properties:
+	a. Id: The id of the node (which is unique within one node container).
+	b. Name: The display name of the node.
+	c. Action: The action script associated with this action node.
+
+7. Service task
+	Represents an (abstract) unit of work that should be executed in this process. All work that is executed outside the process engine 
+should be represented (in a declarative way) using a Service Task. Different types of services are predefined, e.g., sending an email, logging  
+a message, etc. Users can define domain-specific services or work items, using a unique name and by defining the parameters (input) and 
+results (output) that are associated with this type of work. When a Service Task is reached in the process, the associated work is executed. 
+A Service Task should have one incoming connection and one outgoing connection. It contains the following properties:
+	a. Id: The id of the node (which is unique within one node container).
+	b. Name: The display name of the node.
+	c. Parameter mapping: Allows copying the value of process variables to parameters of the work item. Upon creation of the work item, 
+			      the values will be copied.
+	d. Result mapping: Allows copying the value of result parameters of the work item to a process variable. Each type of work can 
+			   define result parameters that will (potentially) be returned after the work item has been completed.
+	e. On-entry and on-exit actions: Actions that are executed upon entry or exit of this node, respectively.
+	f. Additional parameters: Each type of work item can define additional parameters that are relevant for that type of work. For example, 
+				  the "Email" work item defines additional parameters such as From, To, Subject and Body.
+
+8. User task
+	Processes can also involve tasks that need to be executed by human actors. A User Task represents an atomic task to be executed by a 
+human actor. It should have one incoming connection and one outgoing connection. User Tasks can be used in combination with Swimlanes to 
+assign multiple human tasks to similar actors. A User Task is actually nothing more than a specific type of service node (of type 
+"Human Task"). A User Task contains the following properties:
+	a. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

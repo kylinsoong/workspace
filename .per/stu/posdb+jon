@@ -1,0 +1,80 @@
+1. How to install and configure PostgreSQL Database?
+	(1) Open a Terminal window and enter the following command:
+		yum install postgresql-server
+	(2) Use the following command check the installation result:
+		rpm -qa | grep postgres*
+	(3) Set Password for postgres User.
+		a. the installation creates a user named postgres, change the password of User postgres to enter the following command:
+			 passwd postgres
+		b. enter <passwd> twice for setting the password
+		c. login as postgres by enter the command:
+			su - postgres
+	(4) Initialize the Database - Enter the following commands to initialize the database:
+		initdb -D /var/lib/pgsql/data
+	(5) Start the Database:
+		postgres -D /var/lib/pgsql/data
+		Note that: This command will hang, just leave the terminal window open.
+	(6) Configure the Database	
+		a. open a new terminal window and switch users to postgres:
+			su - postgres
+		b. Run the psql tool:
+			psql
+		c. create a password on the database for the postgres user:
+			ALTER USER postgres PASSWORD 'postgres'
+		d. create a PostgreSQL role named jonadmin with password jonadmin:
+			CREATE USER jonadmin PASSWORD 'jonadmin'
+		e. create a PostgreSQL database named jon, specifying the jonadmin role as the owner:
+			CREATE DATABASE jon OWNER jonadmin
+		f. exit the psql for entering the command:
+			\q
+	(7) Stop the Database:
+		In postgres start hang terminal, entering Ctrl+c
+	(8) Tuning the PostSQL Database
+		Edit the '/var/lib/pgsql/data/postgresql.conf', Set & change some of listed parameter can enhance DB performance.
+	(9) Start & Stop PostSQL Database as service
+		service postgresql start
+		service postgresql stop
+~~~
+CREATE USER postest PASSWORD 'postest';
+CREATE DATABASE test OWNER postest;
+~~~
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+2. How to install jon plug-ins to jon server?
+	The following is a example to install jon plug-ins for JBoss EAP:
+	1> unzip jon-plugin-pack-eap-2.4.1.GA.zip
+	2> there are 7 plug-ins in this archive, to view them, enter the following commands:
+		cd jon-plugin-pack-eap-2.4.1.GA/
+		ls
+	3> to install the plug-ins, copy all above jars to /plugins folder of jon server:
+		cp *.jar jon-server-2.4.1/jon-server-2.4.1.GA/plugins
+	
+----------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

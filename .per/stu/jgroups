@@ -1,0 +1,22 @@
+Primary Purpose & Objective
+	(1) How to install JGroups?
+	(2) How to configure JGroups?
+	(3) How to write a simple application using the major methods of the JGroups API? 
+
+1. Installation, Download both Binary jar files and Src Code.
+
+	JGroups ships as a single JAR file: jgroups-x.y.z.jar. Simply add it to your classpath and start coding !
+
+	The JGroups version can be printed with java -jar jgroups-x.y.z.jar.
+
+	There's a simple draw demo, start 2 or more instances: java -cp jgroups-x.y.z.jar org.jgroups.demos.Draw, 
+and see if the members find each other.
+
+	The sources for the core classes are in jgroups-sources.jar.
+
+	If you want the complete sources, including unit tests, go to http://www.github.com/belaban/jgroups.
+
+	JGroups is hosted at www.jgroups.org.
+
+
+	

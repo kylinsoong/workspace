@@ -1,0 +1,34 @@
+---> OpenShift Kicking off
+1. What is OpenShift?
+	Red Has's free platform as a service for applications in the cloud?
+	OpenShift enables you to create, deploy and manage applications within the cloud. It provides disk space, CPU resources, memory, 
+network connectivity, and an Apache or JBoss server. Depending on the type of application you are building, you also have access to 
+a template file system layout for that type (for example, PHP, Python, and Ruby/Rails). 
+	OpenShift also generates a limited DNS for you. 
+
+2. https://openshift.redhat.com/app/getting_started
+
+
+
+	**************************************
+	** OpenShift Command Line Interface **
+	**************************************   
+
+1. rhc domain create -n kylin -l ksoong@redhat.com -p <password>
+        a. This will create domain in openshift if no any assosiate doamin existed
+        b. This will Generate public/private RSA key pair, and upload pushish key to Openshift
+
+----------------------------------------------------------------
+
+2. rhc domain destroy -n kylin -l ksoong@redhat.com -p <password>
+        a. This will destory domain if no application deployed under doamin
+
+-----------------------------------------------------------------
+
+3. rhc domain status -l ksoong@redhat.com -p <password>
+        a. If configure correct we will see
+                =========================================================
+                ||  Congratulations, your system has passed all tests  ||
+                =========================================================
+
+

@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app >
+
+    <!--
+    To use non XDoclet filters, create a filters.xml file that
+    contains the additional filters (eg Sitemesh) and place it in your
+    project's merge dir.  Don't include filter-mappings in this file,
+    include them in a file called filter-mappings.xml and put that in
+    the same directory.
+    -->
+
+   <filter>
+      <filter-name>SetCharacterEncodingFilter</filter-name>
+      <filter-class>com.staffware.frameworks.web.filter.SetCharacterEncodingFilter</filter-class>
+   </filter>
+
+    <!--
+    To use non XDoclet filter-mappings, create a filter-mappings.xml file that
+    contains the additional filter-mappings and place it in your
+    project's merge dir.
+    -->
+   <filter-mapping>
+      <filter-name>SetCharacterEncodingFilter</filter-name>
+      <url-pattern>/*</url-pattern>
+   </filter-mapping>
+
+    <!--
+    To use non XDoclet listeners, create a listeners.xml file that
+    contains the additional listeners and place it in your
+    project's merge dir.
+    -->
+   <listener>
+      <listener-class>com.staffware.frameworks.web.listener.ContextListener</listener-class>
+   </listener>
+
+   <servlet>
+      <servlet-name>ControllerServlet</servlet-name>
+      <display-name>Controller Servlet</display-name>
+     <servlet-class>com.staffware.frameworks.web.servlet.ControllerServlet</servlet-class>
+
+      <init-param>
+         <param-name>SYS_ERR_DISPATCH</param-name>
+         <param-value>/COM/SWError.jsp</param-value>
+      </init-param>
+
+      <load-on-startup>1</load-on-startup>
+
+   </servlet>
+   <servlet>
+      <servlet-name>UtilityServlet</servlet-name>
+      <display-name>Utility Servlet</display-name>
+     <servlet-class>com.staffware.frameworks.web.servlet.UtilServlet</servlet-class>
+
+      <init-param>
+         <param-name>SYS_ERR_DISPATCH</param-name>
+         <param-value>/COM/SWError.jsp</param-value>
+      </init-param>
+
+      <load-on-startup>1</load-on-startup>
+
+   </servlet>
+
+  <!--
+  To use non XDoclet servlets, create a servlets.xml file that
+  contains the additional servlets (eg Struts) and place it in your
+  project's merge dir.  Don't include servlet-mappings in this file,
+  include them in a file called servlet-mappings.xml and put that in
+  the same directory.
+  -->
+
+   <servlet-mapping>
+      <servlet-name>ControllerServlet</servlet-name>
+      <url-pattern>/COM/controller</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>UtilityServlet</servlet-name>
+      <url-pattern>/COM/util</url-pattern>
+   </servlet-mapping>
+
+   <!--
+   To specify mime mappings, create a file named mime-mappings.xml, put it in your project's mergedir.
+   Organize mime-mappings.xml following this DTD slice:
+
+   <!ELEMENT mime-mapping (extension, mime-type)>
+   -->
+
+   <!--
+   To specify error pages, create a file named error-pages.xml, put it in your project's mergedir.
+   Organize error-pages.xml following this DTD slice:
+
+   <!ELEMENT error-page ((error-code | exception-type), location)>
+   -->
+
+  <!--
+  To add taglibs by xml, create a file called taglibs.xml and place it
+  in your merge dir.
+  -->
+
+<!-- web-security.xml BEGIN -->
+
+  <!-- The Welcome File List -->
+  <welcome-file-list>
+    <welcome-file>/welcome.html</welcome-file>
+  </welcome-file-list>
+
+<error-page>
+  <error-code>401</error-code>
+  <location>/COMLogin/unauthorized.jsp</location>
+</error-page>
+
+<error-page>
+  <error-code>403</error-code>
+  <location>/COMLogin/forbidden.jsp</location>
+</error-page>
+
+<error-page>
+  <error-code>404</error-code>
+  <location>/COMLogin/notfound.jsp</location>
+</error-page>
+
+<error-page>
+  <error-code>500</error-code>
+  <location>/COMLogin/serverError.jsp</location>
+</error-page>
+
+  <security-constraint>
+   <web-resource-collection>
+      <web-resource-name>Entire web application</web-resource-name>
+      <description>Declarative security tests</description>
+      <url-pattern>/COM/*</url-pattern>
+      <http-method>HEAD</http-method>
+      <http-method>GET</http-method>
+      <http-method>POST</http-method>
+      <http-method>PUT</http-method>
+      <http-method>DELETE</http-method>
+    </web-resource-collection>
+
+    <auth-constraint>
+      <role-name>COMUsers</role-name>
+    </auth-constraint>
+
+    <user-data-constraint>
+      <description>no description</description>
+      <transport-guarantee>NONE</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <login-config>
+    <auth-method>FORM</auth-method>
+    <realm-name>COM</realm-name>
+    <form-login-config>
+      <form-login-page>/COMLogin/containerlogin.jsp</form-login-page>
+      <form-error-page>/COMLogin/loginfailed.jsp</form-error-page>
+    </form-login-config>
+  </login-config>
+
+  <security-role>
+    <role-name>COMUsers</role-name>
+  </security-role>
+	<security-role>
+		<role-name>RulesMgrUsers</role-name>
+	</security-role>
+	<security-role>
+		<role-name>processComponentCreator</role-name>
+	</security-role>
+	<security-role>
+		<role-name>processComponentReader</role-name>
+	</security-role>
+	<security-role>
+		<role-name>processComponentUpdater</role-name>
+	</security-role>
+	<security-role>
+		<role-name>processComponentDeleter</role-name>
+	</security-role>
+	<security-role>
+		<role-name>processCreator</role-name>
+	</security-role>
+	<security-role>
+		<role-name>processReader</role-name>
+	</security-role>
+	<security-role>
+		<role-name>processUpdater</role-name>
+	</security-role>
+	<security-role>
+		<role-name>processDeleter</role-name>
+	</security-role>
+	<security-role>
+		<role-name>executionPlanCreator</role-name>
+	</security-role>
+	<security-role>
+		<role-name>executionPlanReader</role-name>
+	</security-role>
+	<security-role>
+		<role-name>executionPlanUpdater</role-name>
+	</security-role>
+	<security-role>
+		<role-name>executionPlanDeleter</role-name>
+	</security-role>
+	<security-role>
+		<role-name>orderCreator</role-name>
+	</security-role>
+	<security-role>
+		<role-name>orderReader</role-name>
+	</security-role>
+	<security-role>
+		<role-name>orderUpdater</role-name>
+	</security-role>
+	<security-role>
+		<role-name>orderDeleter</role-name>
+	</security-role>
+    <security-role>
+		<role-name>auditReader</role-name>
+	</security-role>
+    <security-role>
+		<role-name>metaDataReader</role-name>
+	</security-role>
+    <security-role>
+		<role-name>metaDataUpdater</role-name>
+	</security-role>
+<!-- web-security.xml END -->
+
+   <ejb-ref >
+      <description><![CDATA[A reference to the ProcessComponentFacade EJB]]></description>
+      <ejb-ref-name>com/ProcessComponentFacade</ejb-ref-name>
+      <ejb-ref-type>Session</ejb-ref-type>
+      <home>com.staffware.frameworks.orchestrator.process.interfaces.ProcessComponentFacadeHome</home>
+      <remote>com.staffware.frameworks.orchestrator.process.interfaces.ProcessComponentFacade</remote>
+   </ejb-ref>
+   <ejb-ref >
+      <description><![CDATA[A reference to the ExecutionPlanFacade EJB]]></description>
+      <ejb-ref-name>com/ExecutionPlanFacade</ejb-ref-name>
+      <ejb-ref-type>Session</ejb-ref-type>
+      <home>com.staffware.frameworks.orchestrator.execution.session.ExecutionPlanFacadeHome</home>
+      <remote>com.staffware.frameworks.orchestrator.execution.session.ExecutionPlanFacade</remote>
+   </ejb-ref>
+   <ejb-ref >
+      <description><![CDATA[A reference to the ConfigurationManagerBean EJB]]></description>
+      <ejb-ref-name>com/ConfigurationManagerBean</ejb-ref-name>
+      <ejb-ref-type>Session</ejb-ref-type>
+      <home>com.staffware.frameworks.base.interfaces.ConfigurationManagerBeanHome</home>
+      <remote>com.staffware.frameworks.base.interfaces.ConfigurationManagerBean</remote>
+   </ejb-ref>
+   <ejb-ref >
+      <description><![CDATA[A reference to the Audit EJB]]></description>
+      <ejb-ref-name>com/AuditFacade</ejb-ref-name>
+      <ejb-ref-type>Session</ejb-ref-type>
+      <home>com.staffware.frameworks.orchestrator.audit.interfaces.AuditFacadeHome</home>
+      <remote>com.staffware.frameworks.orchestrator.audit.interfaces.AuditFacade</remote>
+   </ejb-ref>
+
+</web-app>

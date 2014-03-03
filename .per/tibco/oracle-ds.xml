@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- NOTE - To use this deployment descriptor you must manually substitute the tags -->
+<!--		between the hash(#) characters. This config is manipulated as part of   -->
+<!--		installer please don't modify it.										-->
+<datasources>
+
+	
+	<no-tx-datasource>
+			<jndi-name>com/OracleDS_AUDIT</jndi-name>
+			<connection-url>jdbc:oracle:thin:@//192.168.68.66:1521/prof</connection-url>
+			<driver-class>oracle.jdbc.driver.OracleDriver</driver-class>
+			<!-- Use the security domain defined in conf/login-config.xml -->
+			<security-domain>AuditDBSecurityDomain</security-domain>
+			<exception-sorter-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter</exception-sorter-class-name>
+	</no-tx-datasource>
+</datasources>

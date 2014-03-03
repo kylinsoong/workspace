@@ -1,0 +1,124 @@
+Business Rules management System Study Note
+------------------------------------------------------------------------------------------------------------------------------------------------
+	I.    Installation
+	II.   Starting Up
+	III.  Jackrabbit
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+I. Installation
+------------------------------------------------------------------------------------------------------------------------------------------------
+1. Install Deployable From Package Against JBoss EAP 5.1 Scripts
+	1) install JBoss-eap-5.1, make sure can work, deploy BRMS
+		cp -r jboss-brms.war /home/kylin/work/tools/jboss-eap-5.1/jboss-as/server/default/deploy
+	2) basic configuration
+		vim jmx-console-users.properties (enable security)
+		vim /home/kylin/work/tools/jboss-eap-5.1/jboss-as/server/default/deploy/jboss-brms.war/WEB-INF/components.xml(brms repository point to '/home/kylin/work/tools/jboss-eap-5.1/jboss-as/BRMSRulesRepository')
+	3) start jboss default instance
+		brms rules repository files generated under 'BRMSRulesRepository' directory
+		login in through web browser
+	4) use external databse
+		cp mysql-connector-java-5.1.6.jar /home/kylin/work/tools/jboss-eap-5.1/jboss-as/server/default/lib
+		gedit repository.xml under 'BRMSRulesRepository' directory, change both workspace and version <PersistenceManager> to point to external database
+		from the navigation pane, select Administration, then Repository Configuration
+	5) restart jboss instance which brms had installed, and test
+
+2. Add Role-based Authenrization
+	1) brms-users.properties and brms-roles.properties files under server/PROFILE/conf/props/ directory, specify users and groups
+	2) configure login-config.xml, add <application-policy> element,
+	3) modify PROFILE/deploy/JBoss-BRMS.war/WEB-INF/components.xml to use step 2 configued authentication method
+	4) change PROFILE/deploy/jboss-brms.war/WEB-INF/components.xml to enable role-based authorization
+
+3. Ant Install and Enable ModeShape
+	1) removeDeployment
+	2) createDeployment
+	3) patch.login.config
+	4) setup.clustering
+ 
+
+4. Database Configuration for Apache Jackrabbit
+	1> The Apache Jackrabbit repository stores two different sets of information, Workspace and Versions.
+		Workspace is the general purpose storage system that holds rule assets and other data.
+		Versions stores the history of all changes to Workspace.
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+II. Starting Up
+------------------------------------------------------------------------------------------------------------------------------------------------
+1. What is a BRMS?
+	JBoss Enterprise BRMS is a Business Rules Management System. JBoss Enterprise BRMS provides tools for managing software business 
+rules in a multi-user environment. It is a single point of truth for your business rules, allowing change to occur in a controlled fashion, 
+using a user-friendly interface. The JBoss Enterprise BRMS Platform is a JBoss Rules-based server-side solution for the management, 
+storage, editing and deployment of rules and other JBoss Rules asset. A web-based user interface is provided as well as integration for 
+JBoss Developer Studio and other Eclipse-based integrated development environments.
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+III. Jackrabbit
+------------------------------------------------------------------------------------------------------------------------------------------------
+1. drop table sql
+	drop table FS_FSENTRY;
+	drop table FS_WS_DEFAULT_FSENTRY;
+	drop table PM_WS_DEFAULT_BINVAL;
+	drop table PM_WS_DEFAULT_BUNDLE;
+	drop table PM_WS_DEFAULT_NAMES;
+	drop table PM_WS_DEFAULT_REFS;
+	drop table VERSIONING_FS_FSENTRY;
+	drop table VERSIONING_PM_BINVAL;
+	drop table VERSIONING_PM_BUNDLE;
+	drop table VERSIONING_PM_NAMES;
+	drop table VERSIONING_PM_REFS;
+
+2. The Apache Jackrabbit repository stores two different sets of information, Workspace and Versions. Workspace is the general 
+purpose storage system that holds rule assets and other data. Versions stores the history of all changes to Workspace. Workspace 
+and Versions can be stored in separate databases but Red Hat recommends using a single database for ease of management.
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------

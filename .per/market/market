@@ -1,0 +1,28 @@
+
+
+EWP REMOVAL FROM MARKET:
+================================
+	Earlier this year we informally announced that we are no longer marketing the JBoss Enterprise Web Platform (EWP). Effective June 1:
+	1. EWP will be disabled in all worldwide direct and channel price lists.
+	2. Existing EWP customers will be encouraged to renew with JBoss Enterprise Application Platform SKUs.
+	3. EWP 5.x will continue to be supported in accordance with the stated maintenance policies presented here 
+(https://access.redhat.com/support/policy/updates/jboss_notes/ )
+	4. All references to JBoss Enterprise Web Platform will be removed from our websites on or before June 20, 2012.
+
+RATIONALE:
+=========
+	 EWP was released into the marketplace as a means to provide enterprise customers with a lighter weight alternative 
+to full Java EE application servers. However, a number of market changes have reduced customer demand for this type of solution.
+	1. The new architecture of EAP6 combined with a simplified Java EE6 specification has blurred the line between fully certified EE6 
+servers and other lightweight technologies (like Tomcat). This has reduced the need for 3 different JBoss application server distributions.
+	2. The Java Web Profile specification (the specification upon which EWP is based) has changed over time due to decisions 
+made by Oracle after the acquisition of Sun. These changes have in many ways stymied adoption of the web profile.
+	3. The cost differential between EAP and EWP was small and many customers when presented with the higher functionality 
+for a minimal cost were willing to buy EAP.
+
+
+
+----------------------------------------------------------------------------------------------------------------------------
+
+Our development is not driven by marketing and sales, but by the needs of the user community.
+

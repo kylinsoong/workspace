@@ -1,0 +1,264 @@
+
+INDEX
+=====
+    1. How do I enable Java garbage collection logging?
+    2. How do I create a Java heap dump?
+    3. What is garbage?
+    4. Heap Size
+    5. Stack size
+    6. Java (JVM) Memory Types
+    7. OutOfMemoryError(OOME)
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+1. How do I enable Java garbage collection logging?
+	Add the appropriate JVM options to enable garbage collection logging.
+The following JVM options can be used on JDK 1.6 update 4 and later:
+~~~
+-verbose:gc -Xloggc:gc.log
+-verbose:gc -Xloggc:gc.log -XX:+PrintGCDetails
+-verbose:gc -Xloggc:gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps
+~~~
+This will log GC activity with human readable timestamps. gc.log will be created in in the directory defined by the user.dir 
+environment variable if no path is provided.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+2. How do I create a Java heap dump?
+
+~~~
+-XX:+HeapDumpOnOutOfMemoryError
+~~~
+
+Notes:
+======
+    1) Produces dumps in hprof format, a binary, platform-independent format.
+
+    2) By default the heap dump is created in the directory defined by the user.dir environment variable and named java_pid<pid>.hprof, 
+where <pid> is the  Java process id. For JBoss, check boot.log to see the value of user.dir (e.g. $JBOSS_HOME/bin).
+
+    3) Use the -XX:HeapDumpPath option to specify a different location (e.g. -XX:HeapDumpPath=/tmp/myheapdump.hprof). There is no way to 
+have the JVM substitute the process ID into the filename, but if you specify a directory Java will write it there using the default 
+file name, including the process id.
+
+    4) This option does not impact performance (until the heap is actually written out); it is simply a flag to indicate that a heap dump should be generated when the first thread throws OutOfMemoryError.
+
+    5) It is typically a best practice to use this JVM option, as it provides critical information in case of a memory error.
+
+The following are all reasons why a heap dump would not be created on OutOfMemoryError:
+=======================================================================================
+	1) The application, not the JVM, creates and throws the OutOfMemoryError.
+
+	2) Another resource like threads per process is exhausted.
+
+	3) The native heap is exhausted.
+
+	4) The heap dump is written only on the first OutOfMemoryError. If the application chooses to catch it and continues to run, 
+           the next OutOfMemoryError will not cause a heap dump to be written.
+
+	5) The OutOfMemoryError is of type "java.lang.OutOfMemoryError: GC overhead limit exceeded", which does not initiate a heap dump.
+
+	6) Using -XX:OnOutOfMemoryError="kill -9 %p", which causes the JVM to terminate before the heap dump is captured. 
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+3. What is garbage?
+	1) An object that cannot be reached from any pointer in a running program
+	2) Simplistic garbage collection algorithm is to iterate over all reachable objects marking them; everything left over is garbage.
+	3) This is very inefficient with large memory heaps; there is potentially a very large number of object instances that need to be 
+iterated over (increases GC pauses)
+	4) Without compacting you end up with fragmented memory.
+	5) This also ignores the fact that different object collections have different lifetime:
+		
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+4. Heap Size
+	1) The allocation of memory for the JVM is specified using -X options when starting JVM (the exact options may depend upon 
+the JVM that you are using, the examples here are for the Sun JVM).
+	-Xms  ->  initial java heap size
+	-Xmx  ->  maximum java heap size
+	-Xmn  ->  the size of the heap for the young generation
+
+	2) Heap size does not determine the amount of memory your process uses
+	If you monitor your java process with an OS tool like top or taskmanager, you may see the amount of memory you use exceed 
+the amount you have specified for -Xmx. -Xmx limits the java heap size, java will allocate memory for other things, including a stack 
+for each thread. It is not unusual for the total memory consumption of the VM to exceed the value of -Xmx.
+
+	3) Garbage collection
+		There are essentially two GC threads running. One is a very lightweight thread which does "little" collections primarily 
+	on the Eden (a.k.a. Young) generation of the heap. The other is the Full GC thread which traverses the entire heap when there is 
+	not enough memory left to allocate space for objects which get promoted from the Eden to the older generation(s).
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+5. Stack size
+	
+	-Xss -> the stack size for each thread 
+
+	Java stacks are created private to a thread. Every thread will have a program counter (PC) and a java stack. PC will use the 
+java stack to store the intermediate values, dynamic linking, return values for methods and dispatch exceptions. 
+
+	Each thread in the JVM get's a stack. The stack size will limit the number of threads that you can have, too big of a stack size 
+and you will run out of memory as each thread is allocated more memory than it needs.
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+6. Java (JVM) Memory Types 
+	
+	Java has only two types of memory when it comes to JVM. Heap memory and Non-heap memory. All the other memory jargons you hear 
+are logical part of either of these two.
+
+	Heap Memory: 
+	============
+	Class instances and arrays are stored in heap memory. Heap memory is also called as shared memory. As this is the place where 
+multiple threads will share the same data.
+
+	Non-heap Memory:
+	================ 
+	It comprises of ‘Method Area’ and other memory required for internal processing. So here the major player is ‘Method Area’. 
+method area is part of non-heap memory. It stores per-class structures, code for methods and constructors. Per-class structure means 
+runtime constants and static fields.
+
+	Memory Generations: 
+	===================
+	HotSpot VM’s garbage collector uses generational garbage collection. It separates the JVM’s memory into two part, and they are 
+called young generation and old generation.
+
+	Young Generation:
+	=================
+	Young generation memory consists of two parts, Eden space and Survivor space. Shortlived objects will be available in Eden space. 
+Every object starts its life from Eden space. When GC happens, if an object is still alive and it will be moved to survivor space and 
+other dereferenced objects will be removed.
+
+	Old Generation:
+	===============
+	Old generation memory has two parts, tenured generation and permanent generation (PermGen). PermGen is a popular term. We used to 
+error like PermGen space not sufficient. GC moves live objects from Survivor space to tenured generation. The permanent generation contains 
+meta data of the virtual machine, class and method objects.
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+7. OutOfMemoryError(OOME)
+
+	Why OOME Can take place?
+	========================
+	a. Run out of Memory at: Java heap area, Permanent area, Native memory area
+	b. Memory leakage
+		Increasing usage of memory and running out of memory finally.
+		If leakage is seen in Java heap, suspect: Non closure of JDBC object, Cached object or Long life object.
+	c. JVM's bug (e.g. GC's compaction is a mess)
+
+	How to Troubleshooting OOME?
+	============================
+	a. Finding out which area OOME happened?
+		Java heap area? Permanent area? or Native memory?
+		Try to find clues in message of OutOfMemoryError
+	b. To find a problematic area, add 3 JVM options of GC (Garbage Collection) logging and get detail information:
+		~~~
+		-Xloggc:<gc logging file name> -XX:+PrintGCTimeStamps -XX:+PrintGCDetails
+		~~~
+
+			|
+			| Probably you will find the following in <gc logging file name>
+		       \|/
+
+		~~~
+		5.926: [Full GC [PSYoungGen: 6669K->0K(29568K)] [PSOldGen: 39515K->43737K(66240K)] 46184K->43737K(95808K) 
+		[PSPermGen: 20713K->20667K(34304K)], 0.1685410 secs] [Times: user=0.16 sys=0.00, real=0.17 secs]
+		~~~
+
+			|
+			| What's the above line really means?
+		       \|/
+
+		1> Full GC happened at 5.926 secs after process started
+		2> Current heap size was changed by GC: 46184K -> 43737K
+		3> Max heap size: 95808K
+		4> Current permanent size was changed: 20713K -> 20667K
+		5> Max permanent area size: 34304K
+		6> Full GC took 0.1685410 secs
+	c. Use JVM option to create heap dump automatically only when OOME happens
+		~~~
+		-XX:+HeapDumpOnOutOfMemoryError
+		~~~
+	
+			|
+			| Note That:
+		       \|/
+
+		1> Sun JDK 1.5.0_07 or later & 6.0, OpenJDK
+		2> Output: .hprof file under current directory(i.e. $JBOSS_HOME/bin directory)
+		3> Use MAT to analyze the binary file.
+
+	d. Use JVM's jmap command to create heap dump
+		1> Sun JDK 5.0
+			~~~
+			jmap -heap:format=b <JBoss_PID>
+			~~~
+		2> Sun JDK 6.0, OpenJDK
+			~~~
+			jmap -dump:format=b,file=heap.hprof <JBoss_PID>
+			~~~
+		3> For 64bit JDK, you need to add “-J-d64” option
+		4> Use MAT to analyze generate binary file.
+	e. Another JVM option to get heap dump in binary format by sending SIGQUIT(3) (or Ctrl+Break for Windows)
+		~~~
+		-XX:HeapDumpOnCtrlBreak
+		~~~
+
+			|
+			| Note That:
+		       \|/
+
+		1> Sun JDK 1.5.0_14 or later, 6.0 & OpenJDK
+		2> kill -3 <JBoss_PID>
+		3> Output: .hprof file under current directory(default)
+		4> Use MAT to analyze the binary file.
+
+	f. Another useful JVM option of class histogram in text format to get  ranking of size and number of Java objects in heap area.
+		~~~
+		-XX:+PrintClassHistogram
+		~~~
+			
+			|
+			| Note That:
+		       \|/
+
+		kill -3 <JBoss_PID>, Classhistogram in text format at stdout. For ex)
+	g. Check process size of JBoss and if it reaches at OS's limitation
+		1> Command:
+			Linux: ps -p <PID> -o `cmd vsz'
+			Windows: perfmon command
+		2> If it reaches at OS's limitation, available options are:
+			Reduce Java thread's stack size by JVM option -Xss
+			Reduce Java heap size by JVM option -Xmx
+			Suspect JNI code in application causes leak
+			Use 64bit JVM if you hit 32bit limitation(~2GB)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

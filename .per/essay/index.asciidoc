@@ -1,0 +1,17 @@
+ESSAY
+-----
+
+link:the_fringe_benefits_of_failure_and_the_importance_of_imagination.asciidoc[The Fringe Benefits of Failure, and the Importance of Imagination]
+
+link:what_are_you_going_to_do_with_that.asciidoc[What are you going to do with that]
+
+link:you_have_got_to_find_what_you_love.asciidoc[You have got to find what you love]
+
+
+
+LYRICS
+------
+
+link:take_a_bow.asciidoc[Take a bow]
+
+

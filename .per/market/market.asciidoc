@@ -1,0 +1,6 @@
+Red Hat acquires FuseSource
+---------------------------
+
+* Last week Red Hat announced that it has signed a definitive agreement to acquire FuseSource from the Progress Software Corporation. FuseSource, a provider of open source integration and messaging, will enable Red Hat to accelerate the delivery of application integration products and services to enterprise customers.
+
+* FuseSource customers are using Apache ServiceMix, ActiveMQ, CXF and Camel in a wide range of mission-critical, enterprise applications. These users not only reap the benefits of using the leading open source integration and messaging software, but are members of our community providing valuable feedback, direction and contributions to the projects. 

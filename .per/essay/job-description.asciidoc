@@ -1,0 +1,26 @@
+The Role:
+---------
+
+* In Red Hat Software, Solution Architect is responsible for architecting solutions, presenting compelling recommendations, and convincing prospective Red Hat customers to leverage industry-leading Open Source solutions. You will collaborate with the sales team and technical delivery teams to bring our customers the best Red Hat solutions.
+
+
+Key Responsibilities:
+---------------------
+
+* Support the sales team in the delivery and implementation of Red Hat JBoss Middleware products and offerings.
+
+* Show a diverse understanding of complex Middleware solutions, design value driven architectures, and present the application and ROI of those technology solutions.
+
+* Use your skills as an experienced professional, and your understanding of industry best practice to deliver excellent, timely results to sales and customers.
+
+
+Desired Skills and Experience:
+------------------------------
+
+* Highly experienced in designing and architecting Middleware solutions, preferably in one or more major application suite such as WebSphere, WebMethods, WebLogic, JBoss or etc.
+
+* Past experience implementing solutions in a J2EE environment, Java programming experience an advantage
+
+* Demonstrated success in a technical pre-sales role in support of Senior Sales Executives, including excellent presentation and documentation skills.
+
+* Fluent in English 

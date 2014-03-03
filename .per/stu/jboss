@@ -1,0 +1,771 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------
+0 Outline
+------------------------------------------------------------------------------------------------------------------------------------------------------
+	I.    Introduction & Architecture & Networking
+	II.   EJB3 Services
+	III.  Logging & Deployment
+	IV.   Microcontainer & JNDI Naming Service
+	V.    Tune in JBoss
+	VI.   JBoss Datasource
+	VII.  Jboss Web Component
+	VIII. JBoss Cluster
+	VIV.  JBoss Cache
+	VV.   JBoss Web Services
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+I. Introduction & Architecture & Networking
+------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Big changes between platform 5 and platform 4	
+	Jboss platform 5 is built on top of the new JBoss Microcontainer, The JBoss Microcontainer project is standalone and replaces the JBoss JMX Microkernel used in the 4.x JBoss Enterprise Application Platforms.
+	JBoss Messaging is a complete rewrite of JBossMQ, which is the default JMS provider for JBoss Enterprise Application Platform 4.2. 
+
+2. JBoss Enterprise Application Platform Bootstrap
+	The PROFILE is the name of the server profile being loaded and corresponds to the server -c command line argument. 
+	The default PROFILE is default.
+ 
+3. Two ways to disable hot deployment
+	1> remove confifguration file JBOSS_HOME/PROFILE/deploy/hdscanner-jboss-beans.xml
+	2> Edit the hdscanner-jboss-beans.xml file and change the scanEnabled attribute to false. add the following properties:
+	   <property name="scanEnabled">false</property>
+
+4. EAP bootup network referenced parameter
+	-b [IP-ADDRESS] Specifies the address the application server binds to. If unspecified, the application server binds to all addresses.
+	-u [IP-ADDRESS] UDP multicast address. Optional. If not specified, only TCP is used. 
+	-m [MULTICAST_PORT_ADDRESS] UDP multicast port. Only used by JGroups.
+
+5. EAP 5 do not support IPv6, this support is planned for the future.
+
+6. default do not support cluster
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+II. EJB3 Services
+------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Jboss platform 4.2 or previous version do not support the full EJB3 feature set. 
+
+2. transactional or security properties are only active when the bean is called through a business interface. 
+
+3. persistence.xml
+	1> Define a persistence-unit with a unique name in the current scoped classloader
+	2> EAP 5 default JPA implementation is Hibernate
+	3> The jta-data-source points to the JNDI name of the database this persistence unit maps to.
+	4> If multiple instances of persistence-unit defined in the same application, you typically need to explicitly tell the @PersistenceContext 		   annotation which unit you want to inject. For instance, @PersistenceContext(name="myapp") injects the EntityManager from the 
+	   persistence-unit named "myapp". 
+	5> The properties element in the persistence.xml can contain any configuration properties for the underlying persistence provider.
+	6> We recommend you to set the hibernate.dialect property explicitly in persistence.xml, especially for less used database servers.
+
+4. how eap handle a msg through deplyed MDB?
+	1> When there is an incoming message in the queue, the server invokes the beans's onMessage() method, and passes in the message itself for 		   processing.
+	2> The bean class specifies the JMS queue it listens to in the @MessageDriven annotation, detailed configuration can be found from EJB3 	   documents.  
+
+5. basic architecture of a ear
+	1> META-INF/applications.xml declares the WAR and EJB3 JAR archives in the EAR, and defines the web content root for the application.
+	2> META-INF/jboss-app.xml provides JBoss-specific deployment configuration for the EAR application.
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+III. Logging & Deployment
+------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Application global log threshold can be controlled through $JBOSS_HOME/server/PROFILE/conf/jboss-log4j.xml
+
+2. 2 ways to debug/trace sql logging with hibernate
+	1> code level. 
+		SessionFactory sf = new Configuration().setProperty("hibernate.show_sql", "true").buildSessionFactory();
+	2> configure log4j file add properties
+		log4j.logger.org.hibernate.SQL=DEBUG, SQL_APPENDER
+		log4j.additivity.org.hibernate.SQL=false
+	3> Transaction Service Logging can be impletemented by configure jbossjta-properties.xml
+
+3. jboss-web.xml define a web root
+
+4. To start the server with the REWRITE_CONTEXT_CHECK variable set to false, run the following command:
+	run.sh -Dorg.apache.catalina.connector.Response.REWRITE_CONTEXT_CHECK=false
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+IV. Microcontainer & JNDI Naming Service
+------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Jboss Platform 5 contains: Servlet/JSP container, EJB container, deployers and management utilities. Microcontainer be used to 
+integrate enterprise services together with those components in order to provide a standard Java EE environment.  
+
+2. queue/IncomingOrders is used to supply JNDI Service
+   ProductCatalog session bean used to supply JNDI Service in cluster mode addtionally.
+
+3. org.jboss.security.jndi.LoginInitialContextFactory
+	1> java.naming.security.principal (or Context.SECURITY_PRINCIPAL): The principal to authenticate. This may be either a java.security.Principal implementation or a string representing the name of a principal. 
+	2> java.naming.security.credentials (or Context.SECURITY_CREDENTIALS), The credentials that should be used to authenticate the 
+principal, e.g., password, session key, etc. 
+	3> java.naming.security.protocol: (Context.SECURITY_PROTOCOL) This gives the name of the JAAS login module to use for the 
+authentication of the principal and credentials.
+
+4. Why Virtual File System?
+	At JBoss we saw that a lot of similar resource handling code was scattered or duplicated all over the place. 
+In most cases it was code that was trying to determine what type of resource a particular thing was (is it a file, a directory, 
+or a jar loading resources through URLs?) and processing of nested archives was also reimplemented again and again in different libraries. 
+There were also many problems with file locking on Windows systems, which forced us to copy all hot-deployable archives to 
+another location to prevent locking those in deploy folders(which would prevent their deletion and filesystem based undeploy).
+	File locking was a major problem that could only be addressed by centralizing all the resource loading code in one place. 
+Recognizing a need to deal with all of these issues in one place, wrapping it all into a simple and useful API, So the Virtual File System Came out.
+	The classloading mechanism needed re-vamping as well, so there is a new ClassLoader with integration to the VFS.
+
+5. What's the procedure of JBoss startup?
+	1) The microcontainer starts up
+	2) The bootstrap process starts
+		1) conf/bootstrap.xml
+		2) conf/jboss-service.xml
+	3) Deployers
+		1) ejb3, jca, web, aop, Seam, dependency, ...
+	4) deploy/
+		1) JBoss & user deployments
+	5) HDScanner
+		1) deploy/hdscanner-jboss-beans.xml
+When the bootstrap.xml file is parsed, the following are some of the bean configurations that get loaded:
+	1> classloader.xml - core classloading system and classpath
+	2> aop.xml - JBossAOP AspectManager bean and @JMX advice beans, and jars
+	3> jmx.xml - JMX Kernel beans
+	4> deployers.xml - the MainDeployer, structure deployers, and bootstrap MC, JMX deployers
+	5> bindings.xml - the ServiceBindingManager bean and configuration
+	6> profile.xml - basic ProfileService beans. This uses the legacy filesystem structure and has no support for management of the profile
+	7> profile-repository.xml - full-featured ProfileService beans which include management and deployment support
+
+====================================
+= (1) The microcontainer starts up =
+====================================
+org.jboss.bootstrap.microcontainer.ServerImpl
+~~~
+private void doInit(final Properties props) throws Exception
+   {
+	...
+
+      log.info("Starting JBoss (Microcontainer)...");
+
+      if (jbossPackage != null)
+      {
+         // Show what release this is...
+         log.info("Release ID: " +
+                  jbossPackage.getImplementationTitle() + " " +
+                  jbossPackage.getImplementationVersion());
+      }
+      else
+      {
+         log.warn("could not get package info to display release, either the " +
+            "jar manifest in jboss-system.jar has been mangled or you're " +
+            "running unit tests from ant outside of JBoss itself.");
+      }
+
+      log.debug("Using config: " + config);
+
+      // make sure our impl type is exposed
+      log.debug("Server type: " + getClass());
+      
+      // log the boot classloader
+      ClassLoader cl = getClass().getClassLoader();
+      log.debug("Server loaded through: " + cl.getClass().getName());
+      
+      // Log the basic configuration elements
+      log.info("Bootstrap URL: " + config.getBootstrapURL());
+      log.info("Home Dir: " + config.getHomeDir());
+      log.info("Home URL: " + config.getHomeURL());
+      log.info("Library URL: " + config.getLibraryURL());
+      log.info("Patch URL: " + config.getPatchURL());
+      log.info("Common Base URL: " + config.getCommonBaseURL());
+      log.info("Common Library URL: " + config.getCommonLibraryURL());
+      log.info("Server Name: " + config.getServerName());
+      log.info("Server Base Dir: " + config.getServerBaseDir());
+      log.info("Server Base URL: " + config.getServerBaseURL());
+      log.info("Server Config URL: " + config.getServerConfigURL());
+      log.info("Server Home Dir: " + config.getServerHomeDir());
+      log.info("Server Home URL: " + config.getServerHomeURL());
+      log.info("Server Data Dir: " + config.getServerDataDir());
+      log.info("Server Library URL: " + config.getServerLibraryURL());
+      log.info("Server Log Dir: " + config.getServerLogDir());
+      log.info("Server Native Dir: " + config.getServerNativeDir());
+      log.info("Server Temp Dir: " + config.getServerTempDir());
+      log.info("Server Temp Deploy Dir: " + config.getServerTempDeployDir());
+   }
+~~~
+
+		|
+		|
+	       \|/
+
+==================================
+= (2) Parsing conf/bootstrap.xml =
+==================================
+org.jboss.bootstrap.microcontainer.ServerImpl
+~~~
+protected void doStart(StopWatch watch) throws Throwable
+   {
+      ...
+
+      log.debug("BootstrapURLs=" + bootstrapURLs);
+      
+      // Create an xml deployer
+      kernelDeployer = new TempBasicXMLDeployer(kernel);
+      try
+      {
+         // Deploy the bootstrap urls
+         for (String bootstrapURL : bootstrapURLs)
+         {
+            log.debug("Deploying bootstrap xml:" + bootstrapURL);
+            url = new URL(configURL, bootstrapURL);
+            kernelDeployer.deploy(url);
+         }
+         
+        ...
+      }
+   }
+~~~
+org.jboss.bootstrap.microcontainer.TempBasicXMLDeployer
+~~~
+ public KernelDeployment deploy(final URL url) throws Throwable
+   {
+...
+Unmarshaller unmarshaller = factory.newUnmarshaller();
+      KernelDeployment deployment = (KernelDeployment) unmarshaller.unmarshal(url.toString(), resolver);
+...
+}
+~~~
+org.jboss.classloader.spi.base.BaseClassLoader
+~~~
+public BaseClassLoader(ClassLoaderPolicy policy)
+   {
+     ...
+
+      if (log.isDebugEnabled())
+         log.debug("Created " + this + " with policy " + policy.toLongString());
+      //log.debugf("Created %1s with policy %2s", this, policy);
+   }
+~~~
+org.jboss.embedded.adapters.JMXKernel
+~~~
+private MBeanServer createMBeanServer(String domain) throws Exception
+   {
+      MBeanServer server;
+
+     ...
+         // Create our own MBeanServer
+         server = MBeanServerFactory.createMBeanServer(domain);
+      }
+      log.debug("Created MBeanServer: " + server);
+
+      return server;
+   }
+~~~
+org.jboss.system.deployers.SARDeployer
+~~~
+ private void processXMLClasspath(VFSDeploymentUnit unit, List<ServiceDeploymentClassPath> classpaths) throws Exception
+   {
+      ArrayList<VirtualFile> classpath = new ArrayList<VirtualFile>();
+
+      for (ServiceDeploymentClassPath path : classpaths)
+      {
+         String codebase = path.getCodeBase();
+         String archives = path.getArchives();
+
+         log.debug("Processing classpath: " + unit.getName() + " codebase=" + codebase + " archives=" + archives);
+         VirtualFile codebaseFile = unit.getRoot();
+	
+	...        
+	}
+
+      unit.prependClassPath(classpath);
+   }
+~~~
+
+
+		|
+		|
+	       \|/
+
+==================================
+= (3) Deployers                  =
+==================================
+org.jboss.deployers.plugins.deployers.DeployersImpl
+~~~
+public void install(ControllerContext context, ControllerState fromState, ControllerState toState) throws Throwable
+   {
+      ...
+
+      {
+         if (ControllerState.INSTALLED.equals(toState) && DeploymentState.DEPLOYING.equals(deploymentContext.getState()))
+         {
+            log.debug("Fully Deployed " + context.getName());
+            setState(deploymentContext, DeploymentState.DEPLOYED, null);
+         }
+      }
+   }
+
+~~~
+
+
+		|
+		|
+	       \|/
+
+==================================
+= (4) deploy                     =
+==================================
+org.jboss.ejb3.deployers.Ejb3DependenciesDeployer
+org.jboss.web.tomcat.service.deployers.TomcatDeployment
+...
+
+
+		|
+		|
+	       \|/
+
+==================================
+= (5) HDScanner                  =
+==================================
+
+
+
+6. Tricks in JBoss 5:
+	(1) How to configure the server to include custom folders for scanning deployments?
+		a. configuring a bean in conf/bootstrap/profile.xml. The <applicationURIs> property of the SerializableDeploymentRepositoryFactory 
+		   accepts a list of URLs which will be scanned for applications. You can add your custom servers & folders to this list.
+		b. The same URL should also be added to the VFSCache bean configuration in conf/bootstrap/vfs.xml
+	(2) How to disable Hot Deployment?
+		Remove or rename the deploy/hdscanner-jboss-beans.xml file.
+
+
+
+
+
+	
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+V. Tune in JBoss
+------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Use JConsole monitoring JBoss
+	1> Add JVM parameter '-Djboss.platform.mbeanserver'
+	2> Start Jboss
+	3> Execute the 'jconsole' command(Java is installed correctly), and the JMX control UI pop up. Select the org.jboss.Main and trigger
+	   Connect button. 
+2. Configure User Authentication via LDAP
+	(1) setup ldap server
+	(2) modify login-config.xml file as follwoing:
+		<application-policy name="eBikes">
+		    <authentication>
+		      <login-module code="org.jboss.security.auth.spi.LdapLoginModule" flag="required">
+			<module-option name="java.naming.factory.initial">com.sun.jndi.ldap.LdapCtxFactory</module-option>
+			<module-option name="java.naming.provider.url">
+			  ldap://10.66.129.97:389
+			</module-option>
+			<module-option name="java.naming.security.authentication">simple</module-option>
+			<module-option name="principalDNPrefix">uid=</module-option>
+			<module-option name="principalDNSuffix">,ou=people,dc=fox,dc=com</module-option>
+			<module-option name="rolesCtxDN">ou=Roles,dc=fox,dc=com</module-option>
+			<module-option name="uidAttributeID">member</module-option>
+			<module-option name="matchOnUserDN">true</module-option>
+			<module-option name="roleAttributeID">cn</module-option>
+			<module-option name="roleAttributeIsDN">false</module-option>
+		      </login-module>
+		    </authentication>
+  		</application-policy>
+ 3. Use jboss-profiler tools troubleshoot the problem
+	(1) make sure jboss-profiler tools are available
+	(2) copy javassist.jar, jboss-profiler.jar, jboss-profiler.properties, and jboss-profiler-plugins.jar to the bin directory for 
+	    JBoss server from Jboss-Profiler home
+	(3) edit jboss-profiler.properties for monitor parameter
+	(4) edit run.conf[.bat] to include the JVM options needed for the profiler:
+		-javaagent:jboss-profiler.jar -Djboss-profiler.properties=jboss-profiler.properties
+	(5) java execute jvm generated *.jps, to generate jvm statistic files
+		java -Xmx512m -Djboss-profiler-client.properties=jboss-profiler-client.properties -jar jboss-profiler-client.jar load *.jps
+	(6) use Firefox check the static JVM info data.
+4. Deployable JBoss Service Archive(SAR)
+	(1) The useful SAR archive packages a JBoss service in a JAR file. It is mostly used now by JBoss EAP internal services that have 
+	    not been updated to support the new MC-beans style deployments
+5. Configure JBoss Hot-deployment 
+	$JBOSS_HOME/jboss-as-web/server/$PROFILE/deploy/hdscanner-jboss-beans.xml
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+VI. JBoss Datasource
+------------------------------------------------------------------------------------------------------------------------------------------------------
+1. we do not recommend to use default HSQLDB, HSQLDB has a lot of defects
+
+2. Datasource type:
+	1> <no-tx-datasource>
+		Does not take part in JTA transactions. The java.sql.Driver is used. 
+	2> <local-tx-datasource>
+		Does not support two phase commit. The java.sql.Driver is used. Suitable for a single database or a non-XA-aware resource. 
+	3> <xa-datasource>
+		Supports two phase commit. The javax.sql.XADataSource driver is used. 
+
+3. How to configure a DataSource for remote access?
+	1> add <use-java-context>false</use-java-context> to the datasource configuration file, like the below:
+		<datasources>
+			<local-tx-datasource>
+				<jndi-name>GenericDS</jndi-name>
+				<use-java-context>false</use-java-context>
+				<connection-url>...</connection-url>
+				...
+	2>  By default, we set 'use-java-context' is true, and if we set this is false, it allowing access a connection pool remotely
+	    And this can cause unexcepted problems, since connections are not serializable, Also, transaction propagation is not supported, 
+	    since it can lead to connection leaks if unreliability is present, such as in a system crash or network failure. A remote 
+	    session bean facade is the preferred way to access a datasource remotely.
+
+4. Configure DataSource security with Encryption
+	1> To avoid -ds.xml files contain clear text password, we create a special security domain in order to encrypt the password.
+	   This prevents attackers who may gain access to your datasource file from obtaining the username and password for connecting 
+	   to your database. The username and encrypted password will be moved to the login-config.xml file.
+	2> Jboss provide a tool to encrypt the text string value.
+		java -cp lib/jboss-logging-spi.jar:lib/jbosssx.jar org.jboss.resource.security.SecureIdentityLoginModule password
+	   Note that: a) jboss-logging-spi.jar and jbosssx.jar consists of encryption tool.
+	    	      b) if running on Windows, replace the : in the above command with ; and flip the path separators.
+ 	3> add application-policy to login-config.xml like following:
+		<application-policy name="encrypted domain name">
+		    <authentication>
+		      <login-module code="org.jboss.resource.security.SecureIdentityLoginModule" flag="required">
+			<module-option name="username">kylin</module-option>
+			<module-option name="password">-627bd760a4751ca4</module-option>
+			<module-option name="managedConnectionFactoryName">jboss.jca:name=MySqlDS,service=LocalTxCM</module-option>
+		      </login-module>
+		    </authentication>
+		  </application-policy>
+	4> remove username/password from -ds.xml, add security-domain, the value of security-domain should equal with step 3 application-policy name
+		<security-domain>encrypted domain name</security-domain>
+	5> restart JBoss and test
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+VII Jboss Web Component
+------------------------------------------------------------------------------------------------------------------------------------------------------
+1. how to enable SSL security for JBoss Web Component?
+	1> Generate a new SSL certificate using the keytool application.
+		keytool -genkey -alias tomcat -keyalg RSA -keystore test.keystore -validity 3650
+	2> Configure JBoss Web Component SSL Referred Configuration
+		The final entry will look like (added lines in bold):
+		<Connector protocol="HTTP/1.1" SSLEnabled="true" port="8443" address="${jboss.bind.address}" scheme="https" secure="true" 			clientAuth="false" keystoreFile="${jboss.server.home.dir}/conf/test.keystore" keystorePass="training" sslProtocol="TLS" />
+	3> Test SSL Security Configuration result
+		restart JBoss, and log in to the https connection at https://localhost:8443/
+2. tune in server.xml
+	1) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+VIII. JBoss Cluster
+----------------------------------------------------------------------------------------------------------------------------------------------------
+1. Notes for runing JBoss as cluster mode:
+	1> JBoss Messaging cluster need a unique integer "ServerPeerID" for each node, if you will not be running JBoss Messaging, you will 
+	   remove JBM from the server profile's deploy directory.
+	2> we should keep the "Partition" name short for performance considering.
+	3> generally a good multicast address is of the form 239.255.x.y
+2. How JBoss implementing Web Application cluster?
+	1> backup a copy of each user's HttpSession state, and stored on one or more nodes in the cluster;
+	2> in case the primary node handling the session fails or is shut down, any other node in the cluster can handle subsequent requests 
+	   for the session by accessing the backup copy.
+	3> JBoss use mod_jk as an external load balancer to balance HTTP requests across the cluster 
+	4> we need add add an empty '<distributable/>' element to your application's web.xml file to tell JBoss start Web application Clustering 
+	   behavior.
+3. How JBoss implementing EJB Session Bean cluster?
+	1> EJB3 session beans, simply add the org.jboss.ejb3.annotation.Clustered annotation to the bean class for your stateful or stateless bean
+	2> EJB2 session beans, simply add '<clustered>true</clustered>' element to enterprise-beans section in jboss.xml descriptor file.
+	3> EJB3 also support descriptor configuration to provide cluster behavior
+4. How JBoss implementing EJB Entity bean cluster?
+	1> use the Hibernate second level cache
+	2> you must use a cluster-aware cache if you run your JPA/Hibernate application as cluster mode.
+	3> JBoss provides a cluster-aware second level cache based on JBoss Cache.
+	4> to enable second level caching with JBoss Cache, we need configure the persistence.xml.
+5. JBoss Cluster Strategy:
+	1> Client-side interceptor
+		JNDI, EJB, JMS, RMI and JBoss Remoting (client need to obtain or download a romove proxy or a stub)
+		execute the load balancing: Round-Robin, Random-Robin, First Available, First Available Identical All Proxies
+	2>  External Load Balancer 
+		Web Application
+6. JBoss Cluster Architecture
+	1> server/production/deploy/cluster/jgroups-channelfactory.sar/META-INF/jgroups-channelfactory-stacks.xml: includes various standard
+	   JGroups configurations identified by name (for example, UDP or TCP). 
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+VIV. JBoss Cache
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+VV. JBoss Web Services
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+********************
+* PART ONE: JAX-WS *
+********************
+
+JSR-181
+=======
+1. javax.jws.WebService
+	Marks a Java class as implementing a Web Service, or a Java interface as defining a Web Service interface.
+	endpointInterface   ->  The complete name of the service endpoint interface defining the service's abstract Web Service contract.
+	name	            ->  The name of the Web Service.
+	portName 	    ->  The port name of the Web Service.
+	serviceName 	    ->  The service name of the Web Service.
+	targetNamespace     ->  If the @WebService.targetNamespace annotation is on a service endpoint interface, the targetNamespace is used 
+				for the namespace for the wsdl:portType (and associated XML elements).
+	wsdlLocation 	    ->  The location of a pre-defined WSDL describing the service.
+
+WSDL
+====
+1. What's the WSDL?	
+	WSDL (Web Services Description Language) is an XML-based language for describing Web services and how to access them. 
+WSDL specifies the location of the service and the operations (or methods) the service exposes.
+
+2. The WSDL Document Structure
+	<types>     ->  The data types used by the web service
+	<message>   ->  The messages used by the web service, it defines the data elements of an operation.
+			Each message can consist of one or more parts. 
+	<portType>  ->  The operations performed by the web service
+			The most important WSDL element. It describes the operations that can be performed, and the messages that are involved.
+	<binding>   ->  The communication protocols used by the web service, it defines the message format and protocol details for each port.
+
+3. Operation Types
+	One-way           ->  The operation can receive a message but will not return a response
+	Request-response  ->  The operation can receive a request and will return a response
+	Solicit-response  ->  The operation can send a request and will wait for a response
+	Notification      ->  The operation can send a message but will not wait for a response
+
+4. Binding to SOAP
+	The binding element has two attributes - name and type.
+	The name attribute (you can use any name you want) defines the name of the binding, and the type attribute points to 
+the port for the binding.
+	The soap:binding element has two attributes - style and transport.
+	The style attribute can be "rpc" or "document". The transport attribute defines the SOAP protocol to use.
+	The operation element defines each operation that the portType exposes.
+	For each operation the corresponding SOAP action has to be defined. You must also specify how the input and output are encoded. 
+
+
+Knowledge
+=========
+	Web Services are a powerful tool to connect systems without having to distribute heavy-weight clients. 
+They provide data and services in a platform-independent manner via a published interface which details what the 
+Web Service can do, and how to pass information to the Web Service. This concentrates development on the server side, 
+allowing clients of any type to interact with the server.
+	Web Services are the latest in a long line of distributed application development technologies. 
+	Java provides support for remote beans, that is, EJBs accessed over the network. 
+	Remote Proceedure Call, or RPC, protocols have been around even longer.
+
+1. How Did We Get Here?
+	A distributed application is one which leverages resources from multiple, independent servers, or service providers.
+It allows an application to distribute the work needed to perform a task across several systems. 
+	In 1976, RFC 707 (http://tools.ietf.org/html/rfc707) was published, describing a "A High-Level Framework for 
+Network-Based Resource Sharing". This was the genesis of RPC. The goal of RPC is to make a remote machine's facilities appear to be local. 
+That is, call a method locally, and the protocol for handling that call across a network appears transparent to the user. 
+RPC is still used today for a variety of services.  However, RPC implementations vary widely,  and are not often compatible across 
+different systems.
+	Remote EJBs solved some of the issues with RPC, by developing Java RMI (Remote Method Invocation). While EJBs could communicate 
+mainly with other EJBs, the fact that Java could be run on effectively any platform meant that RPC's issues with differing implementations 
+was minimized. However, running Java is not always possible. The Web Services Interoperability Group has published a set of standards 
+for communication that can be implemented using virtually any technology that can write a text file and drop it on a remote server using 
+a variety of technologies.
+
+2. Web Services Referred Specification
+	The basis of a Web Services provider is that it complies with the WS-I Basic Profile, SOAP and WSDL. There have been several 
+versions of these so far, and different provides support different implementations.
+	The basic outline of the WS-I Basic Profile defines the what (Messaging) and how (Service Description) of a Web Service. 
+It's similar to, for instance, the Java Persistence API, in that it does not provide an implementation, but defines the functionality 
+all implementations must provide.
+	Messaging is handled with SOAP. SOAP used to stand for Simple Object Access Protocol. A SOAP message is created in XML and 
+transmitted over, originally, HTTP (though other network protocols are also supported). A single SOAP message is created with three 
+parts: a SOAP Envelope, which contains a SOAP Header and a SOAP Body (think e-mail).
+	Services Descriptions are defined with a WSDL (Web Service Description Language) file. Again, XML is used to publish how to 
+communicate with a Web Service.
+
+3. Web Services the Java Way
+	JAX-WS is the Java API for XML Web Services. It's designed to provide a Java-based implementation of the Web Service standards.
+	XML is complicated, and as the Web Service becomes more robust, the XML to describe it becomes more unreadable. So, rather than 
+expose the developer to all of the "low-level" implementation details, JAX-WS strives to mask that complexity, allowing the developer to 
+focus on the functionality. JAX-WS handles the conversion from API calls to SOAP and back. Note that the use of JAX-WS does not 
+preclude interoperability with other Web Service clients or servers. A JAX-WS-based server can interact seamlessly with, for instance, 
+a .NET-based client, and vice versa.
+	JAX-WS accomplishes this feat of simplicity by leveraging annotations. For a complete run down of supported annotations, see JSR-181.
+	SAAJ is the SOAP with Attachments API for Java. SAAJ can be used in conjunction with JAX-WS, or stand-alone. It's a 
+lower-level implementation for Web Services, requiring more effort on the part of the developer, but also allowing for more control 
+over the messages sent and recieved.
+	SAAJ also, as it's name implies, supports the SOAP with Attachements protocol, which allows developers much greater flexibilty 
+in constructing a Web Service.
+
+4. How to provide a service?
+	The implementation of a Web Service can be any Java POJO, EJB, or other class which performs some action. There is really nothing 
+special about the actual work being done. Often, an existing Java class which perfoms some business task will be exposed as a Web Service. 
+The Java class itself must provide a public, no argument constructor. Since this is also known as the default constructor, this will only 
+become an issue in classes that provide more robust constructors without also providing a default-like constructor.
+	JBoss provides the JBossWS, an implementation of JAX-WS, for easy development and deployment of Web Services.
+	In order to expose a Web Service, the key item is marking the class that will be providing the implementation with @WebService 
+and @SOAPBinding at the class level. Any methods that will be exposed to the Web Service should be makred with @WebMethod. 
+The parameters and return value of the method will make up the payload of the SOAP message, so the payload must be exposed as well.
+	The payload class is a POJO, simply used to represent data that the Web Service will work with. It must be marked with the @XmlType 
+and @XmlAccessorType annotations, so that it will be included in the WSDL for the Web Service.
+
+5. How to make a Service available in JBoss?
+	Deploying a Web Service is relatively easy. In both the case of a POJO and an EJB, it's mostly a matter of packaging the 
+relevant .class files and dropping the resulting deployment archive into the deploy directory of your server. Supporting libraries are 
+included as part of JBossWS.
+	For a POJO, it should be deployed as a web application, packaged as a WAR file. A web.xml file and the implementation class 
+are all that's required.
+	For an EJB, the application is deployed in a JAR, with only the implementation classes. Deploying to the JBoss EAP will 
+do the rest.
+
+6. How to consume service from JBoss?
+	Generally, getting a WSDL is a matter of connecting to a Web Service provider using a pre-determined URL. In the case of 
+JBoss Web Services, this URL is generally: 
+~~~
+http://hostname:8080/jbossws/services
+~~~
+	From here, the list of services available on that host can be seen, and the desired WSDL can be viewed, and saved. 
+The WSDL is just an XML file, and is not tied to Java. A client can be constructed from this WSDL using a variety of client 
+creation tools, for Java, .NET, etc.
+	JBoss provides the wsconsume script to create a Java-based client, supported by JBossWS libraries. Running wsconsume is 
+a simple matter of telling the script where to find the WSDL, and then sorting through the output. The full command is: 
+~~~
+wsconsume -k -p [package.name] [service].wsdl
+~~~
+	Breaking that down, the -k forces wsconsume to create source files as well as class files, the -p puts the Java code 
+into the given package hierarchy, and the last part is the WSDL file name.
+	The key output is an implementation class, at the top of the stack. This is the Java class used to create the connection 
+to the Web Service and handle the sending and recieving of data from the service.
+
+
+
+
+********************
+* PART TWO: JAX-RS *
+********************
+
+JSR-331
+=======
+	RESTEasy is an portable implementation of this specification which can run in any Servlet container.
+
+
+Knowledge
+=========
+1. RESTful Web Services
+	REST is a newer way to write Web Applications. Rather than dealing with the process of defining both the payload and the 
+methods using WSDL and communicating with SOAP, REST uses basic HTTP methods describe in the HTML5 specification, and the payload 
+is encoded in the URL.
+	The HTTP methods used are PUT, GET, POST and DELETE. These correspond to the basic CRUD methods: Create, Read, Update, Delete.
+	RESTful applications are also bookmarkable, since they use the URL to represent the data.
+	The key to RESTful applications is that they are stateless. All state is managed on the client.
+	The JAX-RS (Java API for RESTful Web Services - please do not ask where the X came from or where the W went) provides a 
+Java-based implementation of REST, allowing for rapid development of RESTful applications.
+	JBoss has implemented JAX-RS as RESTEasy. Additionally, the JBoss Seam framework supports RESTful applications.
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
